@@ -34,7 +34,7 @@ package ro.ciacob.desktop.signals {
 					for (var i:int = 0; i < specificSubscribers.length; i++) {
 						var entry:Object = (_subscribers[changeType] as Array)[i];
 						var callback:Function = entry[CALLBACK];
-						callback (details);
+						callback.apply (null, details);
 					}
 				}
 			}
