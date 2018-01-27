@@ -31,9 +31,12 @@ package ro.ciacob.desktop.signals {
 			if (changeType in _subscribers) {
 				var specificSubscribers:Array = (_subscribers[changeType] as Array);
 				if (specificSubscribers != null) {
-					for (var i:int = 0; i < specificSubscribers.length; i++) {
-						var entry:Object = (_subscribers[changeType] as Array)[i];
-						var callback:Function = entry[CALLBACK];
+					var i:int;
+					var entry:Object;
+					var callback:Function;
+					for (i = 0; i < specificSubscribers.length; i++) {
+						entry = (_subscribers[changeType] as Array)[i];
+						callback = entry[CALLBACK];
 						callback.apply (null, details);
 					}
 				}
