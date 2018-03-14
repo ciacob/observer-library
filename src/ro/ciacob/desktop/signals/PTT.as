@@ -11,9 +11,6 @@
 
 package ro.ciacob.desktop.signals {
 
-	import ro.ciacob.desktop.signals.IObserver;
-	import ro.ciacob.desktop.signals.Observer;
-	import ro.ciacob.utils.Strings;
 
 	/**
 	 * PTT (for Pneumatic Tube Transport, the late 19th / early 20th century compressed air postal
@@ -64,26 +61,6 @@ package ro.ciacob.desktop.signals {
 		private var _backups : Object;
 		private var _observer : IObserver;
 
-		private static function _resolveToValidID (rawID : Object) : String {
-			var id : String;
-			if (rawID is String) {
-				id = Strings.trim (rawID as String);
-			}
-			else if (rawID is uint) {
-				id = (rawID as uint).toString();
-			}			
-			else if (rawID is int) {
-				id = (rawID as int).toString();
-			}
-			else if ((rawID is Number) && !isNaN (rawID as Number)) {
-				id = (rawID as Number).toString ();
-			}
-			if (Strings.isEmpty (id)) {
-				throw (new ArgumentError ('PTT:: could not resolve ' + JSON.stringify (rawID) + ' to a valid ID.'));
-			}
-			return id;
-		}
-
 		/**
 		 * Retrieves a PTT instance for transmitting content through. If ommitted, defaults to the
 		 * default (public) instance. Note that there is no publicly accessible list of pipe
@@ -95,14 +72,8 @@ package ro.ciacob.desktop.signals {
 		 *
 		 * @return	A discreet PTT instance corresponding to given pipe name.
 		 */
-		public static function getPipe (id : Object = null) : PTT {
-			var pipeName : String = null;
-			if (id !== null) {
-				pipeName = _resolveToValidID (id);
-			}
-			if (pipeName == null) {
-				pipeName = PUBLIC_PIPE;
-			}
+		public static function getPipe (id : String = null) : PTT {
+			var pipeName : String = id || PUBLIC_PIPE;
 			_requestedPipe = pipeName;
 			if (!(_requestedPipe in _pipes)) {
 				_pipes[_requestedPipe] = new PTT;
@@ -123,28 +94,24 @@ package ro.ciacob.desktop.signals {
 			_backups = {};
 		}
 
-		public function deleteBackupFor (id : Object) : void {
-			var address : String = _resolveToValidID (id);
+		public function deleteBackupFor (address : String) : void {
 			if (hasBackupFor (address)) {
 				delete _backups[address];
 			}
 		}
 
-		public function hasBackupFor (id : Object) : Boolean {
-			var address : String = _resolveToValidID (id);
+		public function hasBackupFor (address : String) : Boolean {
 			return (address in _backups);
 		}
 
-		public function recoverBackupFor (id : Object) : Object {
-			var address : String = _resolveToValidID (id);
+		public function recoverBackupFor (address : String) : Object {
 			if (hasBackupFor (address)) {
 				return _backups[address];
 			}
 			return null;
 		}
 
-		public function send (id : Object, content : Object = null) : void {
-			var address : String = _resolveToValidID (id);
+		public function send (address : String, content : Object = null) : void {
 			if (_hasSubscribers (address)) {
 				_observer.notifyChange (address, content);
 			} else {
@@ -152,8 +119,7 @@ package ro.ciacob.desktop.signals {
 			}
 		}
 
-		public function subscribe (id : Object, handler : Function) : void {
-			var address : String = _resolveToValidID (id);
+		public function subscribe (address : String, handler : Function) : void {
 			if (handler == null) {
 				throw(new ArgumentError ('PTT.subscribe: argument `handler` cannot be missing.'));
 			}
@@ -172,8 +138,7 @@ package ro.ciacob.desktop.signals {
 		 * @param addr
 		 * 		  Unique value to refer to an address on the current pipe. Valid types are String, int, uint and Number.
 		 */
-		public function unsubscribe (id : Object, handler : Function = null) : void {
-			var address : String = _resolveToValidID (id);
+		public function unsubscribe (address : String, handler : Function = null) : void {
 			_observer.stopObserving (address, handler);
 		}
 
