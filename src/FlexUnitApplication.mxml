@@ -10,10 +10,12 @@
 	<fx:Script>
 		<![CDATA[
 			import ro.ciacob.desktop.signals.tests.PTT_Tests;
+			import ro.ciacob.utils.tests.ArraysTests;
 			
 			public function currentRunTestSuite():Array
 			{
 				var testsToRun:Array = new Array();
+				testsToRun.push(ro.ciacob.utils.tests.ArraysTests);
 				testsToRun.push(ro.ciacob.desktop.signals.tests.PTT_Tests);
 				return testsToRun;
 			}
