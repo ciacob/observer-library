@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testrun name="" >
 <testsuite  name="Default Test Suite" project="observer-library">
+<testsuite name="ro.ciacob.utils.tests:ArraysTests" type="testsuiteclass"/>
 <testsuite name="ro.ciacob.desktop.signals.tests:PTT_Tests" type="testsuiteclass"/>
 </testsuite>
 <portNumber value="8765" />
