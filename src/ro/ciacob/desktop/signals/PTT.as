@@ -1,52 +1,42 @@
-/*//////////////////////////////////////////////////////////////////*/
-/*                                                                  */
-/*   Unless stated otherwise, all work presented in this file is    */
-/*   the intelectual property of:                                   */
-/*   @author Claudius Iacob <claudius.iacob@gmail.com>              */
-/*                                                                  */
-/*   All rights reserved. Obtain written permission from the author */
-/*   before using/reusing/adapting this code in any way.            */
-/*                                                                  */
-/*//////////////////////////////////////////////////////////////////*/
-
 package ro.ciacob.desktop.signals {
 
 
 	/**
-	 * PTT (for Pneumatic Tube Transport, the late 19th / early 20th century compressed air postal
-	 * networks) is a class internally using an implementaion of IObserver. It is intended to
-	 * replace the AS3 bubbling event model with some simpler, leaner and more straight forward way
-	 * of passing information around, while keeping all the communicating participants uncoupled.
-	 * Maybe most importantly, the PTT system is SYNCHRONOUS.
+	 * The PTT (Pneumatic Tube Transport) class provides a synchronous inter-object communication system
+	 * for AS3 applications. It provides an alternative to the AS3 bubbling event model: a simpler,
+	 * synchronous and more straightforward way of passing information between objects, while keeping
+	 * them decoupled.
 	 *
-	 * Supports PIPES for isolating/directing the flow to a specific (range) of subscribers only.
+	 * PTT supports the use of pipes to isolate and direct information flow to specific subscribers. It
+	 * also allows for retroactive subscription, where late subscribers can receive the last content
+	 * sent to a specific address.
 	 *
-	 * Examples: 
-	 * 
+	 * Examples:
 	 * <code>
+	 *      // Sending out information
+	 *      PTT.getPipe(pipeName).send(address, content);
 	 *
-	 * 		// Sending out information
-	 * 		PTT.getPipe(pipeName).send (address, content);
+	 *      // Subscribing to receive content
+	 *      PTT.getPipe(pipeName).subscribe(address, handler);
 	 *
-	 * 		// Subscribing to receive a certain content
-	 * 		PPT.getPipe(pipeName).subscribe (address, handler);
+	 *      // Unsubscribing from receiving content
+	 *      PTT.getPipe(pipeName).unsubscribe(address, handler);
 	 *
-	 * 		// Unsubscribing
-	 * 		PPT.getPipe(pipeName).unsubscribe (address, handler);
+	 *      // Retroactively subscribing to receive last content
+	 *      PTT.getPipe(pipeName).retroactivelySubscribe(address, callback);
 	 *
-	 * 		// Pickup last delivery - lets late subscribers access the last content sent to a specific address
-	 * 		if (PPT.getPipe(pipeName).hasBackupFor(address)) {
-	 * 			PPT.getPipe(pipeName).recoverBackupFor (address);
-	 * 		}
-	 * 
-	 * 		// Discard back-ups of last derivery
-	 * 		if (PPT.getPipe(pipeName).hasBackupFor(address)) {
-	 * 			PPT.getPipe(pipeName).deleteBackupFor (address);
-	 * 		}
+	 *      // Checking for and accessing backup of last delivery
+	 *      if (PTT.getPipe(pipeName).hasBackupFor(address)) {
+	 *          PTT.getPipe(pipeName).recoverBackupFor(address);
+	 *      }
 	 *
-	 * 		// Prepare for garbage collection
-	 * 		PPT.getPipe(pipeName).trash();
+	 *      // Discarding backups of last delivery
+	 *      if (PTT.getPipe(pipeName).hasBackupFor(address)) {
+	 *          PTT.getPipe(pipeName).deleteBackupFor(address);
+	 *      }
 	 *
+	 *      // Preparing for garbage collection
+	 *      PTT.getPipe(pipeName).trash();
 	 * </code>
 	 *
 	 * @author ciacob
@@ -62,15 +52,15 @@ package ro.ciacob.desktop.signals {
 		private var _observer : IObserver;
 
 		/**
-		 * Retrieves a PTT instance for transmitting content through. If ommitted, defaults to the
+		 * Retrieves a PTT instance for transmitting content. If omitted, defaults to the
 		 * default (public) instance. Note that there is no publicly accessible list of pipe
 		 * instances.
 		 *
-		 * @param	uid The name of a pipe. Accepted values are Strings, numericals, or any instance
-		 *                     containing a `toString()` member function. `Null` is assumed for
-		 *                     non-accepted values.
+		 * @param id The name of a pipe. Accepted values are Strings, numbers, or any instance
+		 * containing a `toString()` member function. `Null` is assumed for non-accepted
+		 * values.
 		 *
-		 * @return	A discreet PTT instance corresponding to given pipe name.
+		 * @return A discreet PTT instance corresponding to the given pipe name.
 		 */
 		public static function getPipe (id : String = null) : PTT {
 			var pipeName : String = id || PUBLIC_PIPE;
@@ -84,7 +74,8 @@ package ro.ciacob.desktop.signals {
 		}
 
 		/**
-		 * @see PTT Documentation of `PTT` class
+		 * Initializes a new instance of the PTT class.
+		 * @constructor
 		 */
 		public function PTT () {
 			if (_requestedPipe == null || _pipes[_requestedPipe] != null) {
@@ -94,16 +85,35 @@ package ro.ciacob.desktop.signals {
 			_backups = {};
 		}
 
+		/**
+		 * Deletes the backup content for a given address.
+		 *
+		 * @param address The address for which to delete the backup content.
+		 */
 		public function deleteBackupFor (address : String) : void {
 			if (hasBackupFor (address)) {
 				delete _backups[address];
 			}
 		}
 
+		/**
+		 * Checks if there is backup content available for a given address.
+		 *
+		 * @param address The address for which to check backup content availability.
+		 *
+		 * @return True if there is backup content available, otherwise false.
+		 */
 		public function hasBackupFor (address : String) : Boolean {
 			return (address in _backups);
 		}
 
+		/**
+		 * Retrieves the backup content for a given address, if available.
+		 *
+		 * @param address The address for which to retrieve the backup content.
+		 *
+		 * @return The backup content if available, otherwise null.
+		 */
 		public function recoverBackupFor (address : String) : Object {
 			if (hasBackupFor (address)) {
 				return _backups[address];
@@ -111,6 +121,12 @@ package ro.ciacob.desktop.signals {
 			return null;
 		}
 
+		/**
+		 * Sends content to the specified address within the pipe.
+		 *
+		 * @param address The address to which the content will be sent.
+		 * @param content The content to send.
+		 */
 		public function send (address : String, content : Object = null) : void {
 			if (_hasSubscribers (address)) {
 				_observer.notifyChange (address, content);
@@ -119,6 +135,15 @@ package ro.ciacob.desktop.signals {
 			}
 		}
 
+		/**
+		 * Subscribes a callback function to receive content updates for a specific address within
+		 * the pipe.
+		 *
+		 * @param address The address for which to subscribe to receive content updates.
+		 * @param handler The callback function to be invoked when content is sent to the specified address.
+		 *
+		 * @throws ArgumentError If the handler function is missing.
+		 */
 		public function subscribe (address : String, handler : Function) : void {
 			if (handler == null) {
 				throw(new ArgumentError ('PTT.subscribe: argument `handler` cannot be missing.'));
@@ -127,7 +152,23 @@ package ro.ciacob.desktop.signals {
 		}
 
 		/**
-		 * Prepares the current instance for garbage collection.
+		 * Subscribes a callback function to receive content updates for a specific address within
+		 * the pipe and immediately delivers the last content if available.
+		 *
+		 * @param address The address for which to subscribe to receive content updates.
+		 * @param callback The callback function to be invoked when content is sent to the specified address.
+		 */
+		public function retroactivelySubscribe(address:String, callback:Function):void {
+			subscribe(address, callback);
+			if (hasBackupFor(address)) {
+				callback(recoverBackupFor(address));
+				deleteBackupFor(address);
+			}
+		}
+
+		/**
+		 * Prepares the current instance for garbage collection by clearing backups and stopping
+		 * observations.
 		 */
 		public function trash () : void {
 			_backups = {};
@@ -135,8 +176,12 @@ package ro.ciacob.desktop.signals {
 		}
 
 		/**
-		 * @param addr
-		 * 		  Unique value to refer to an address on the current pipe. Valid types are String, int, uint and Number.
+		 * Unsubscribes a callback function from receiving content updates for a specific address within
+		 * the pipe.
+		 *
+		 * @param address The address for which to unsubscribe from receiving content updates.
+		 * @param handler Optional. The callback function to unsubscribe. If not provided, all handlers
+		 * for the specified address will be unsubscribed.
 		 */
 		public function unsubscribe (address : String, handler : Function = null) : void {
 			_observer.stopObserving (address, handler);
